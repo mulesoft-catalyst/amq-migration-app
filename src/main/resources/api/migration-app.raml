@@ -14,33 +14,6 @@ traits:
   commonHeaders: !include traits/commonHeaders.raml
   
 
-/rtf/deploy:
-  post:
-    is: [commonHeaders]
-    body:
-      application/json:
-        type: appDetails[]
-        example: !include examples/deploy-post-input.json
-          
-    responses:
-      202:
-        body:
-          application/json:
-            
-
-/migrate/rtf:
-  post:
-    is: [commonHeaders]
-    body:
-      application/json:
-        type: rftMigrationDetails
-        
-          
-    responses:
-      202:
-        body:
-          application/json:
-
 /migrate/queue:
   post:
     is: [commonHeaders]
@@ -52,16 +25,6 @@ traits:
         body:
           application/json:
 
-/migration/alerts:
-  post:
-    is: [commonHeaders]
-    body:
-      type: alertType
-    responses:
-      202:
-        body:
-          application/json:
-            
 
             
             

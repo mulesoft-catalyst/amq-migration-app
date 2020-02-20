@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<global-property doc:name="Global Property" doc:id="920080b1-3f02-4e88-840d-ad87a1e1b55c" name="mule.env" value="local" />
+	<global-property doc:name="Global Property" doc:id="3dbb7246-7bda-40ec-b015-52ae185c7ed5" name="enc.key" value="1234567890123456" />
+	<global-property doc:name="Global Property" doc:id="7305981e-8401-4cda-b0bc-0225c62d1a7b" name="anypoint.user.pass" value="ummeHANI2148@!$*" />
+</mule>
