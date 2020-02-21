@@ -9,9 +9,25 @@ http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/cu
 	<flow name="migrate-mqFlow" doc:id="dff7449c-f876-4546-b134-2e7ecd73475f" >
 		<flow-ref doc:name="set-vars-subflow" doc:id="f820ed0d-83f7-4ffd-9ade-82da0f130a74" name="set-vars-subflow" />
 		<set-variable value="#[vars.sourceEnvId]" doc:name="Set source env" doc:id="fbc44ab3-c764-448f-88a3-71e14caf0b26" variableName="env"/>
-		<flow-ref doc:name="get-q-list-subflow" doc:id="a9712893-24e0-4a8f-bd25-f7b2af04abde" name="get-q-list-subflow" target="sourceQList" targetValue="#[payload]"/>
+		<flow-ref doc:name="get-q-list-subflow" doc:id="a9712893-24e0-4a8f-bd25-f7b2af04abde" name="get-q-list-subflow" targetValue="#[payload]"/>
+		<ee:transform doc:name="Create source vars" doc:id="520a2376-2b03-4ba5-8cb9-2ad5d7f9267e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sourceQList" ><![CDATA[payload.queue]]></ee:set-variable>
+				<ee:set-variable variableName="sourceExchangeList" ><![CDATA[payload.exchange]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 		<set-variable value="#[vars.targetEnvId]" doc:name="Set target env" doc:id="5b44b2cb-ae59-4d60-8a57-2f27c1319cc6" variableName="env"/>
-		<flow-ref doc:name="get-q-list-subflow" doc:id="60ec33e9-a953-4b0f-89d7-1317996fc999" name="get-q-list-subflow" target="targetQList" targetValue="#[payload]"/>
+		<flow-ref doc:name="get-q-list-subflow" doc:id="60ec33e9-a953-4b0f-89d7-1317996fc999" name="get-q-list-subflow" targetValue="#[payload]"/>
+		<ee:transform doc:name="Cretae target vars" doc:id="48d396f4-a489-4cdd-9356-db6471e2c70c" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="targetQList" ><![CDATA[payload.queue]]></ee:set-variable>
+				<ee:set-variable variableName="targetExchangeList" ><![CDATA[payload.exchange]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
 		<flow-ref doc:name="prepare-migration-data" doc:id="a719b6a0-8a02-4067-9791-a10bcdb338d3" name="prepare-migration-data"/>
 		<choice doc:name="Choice" doc:id="adc0d610-15c9-48f0-8210-c526ec836410" >
 			<when expression="#[sizeOf(vars.finalTargetQNames) &gt; 0]">
@@ -43,13 +59,16 @@ fun getQueuesWithDLQ(data) = data filter($.deadLetterQueueId != null)
 	env: vars.targetEnvId,
 	orgId: vars.orgId,
 	cleanTarget: vars.cleanTarget,
+	targetExchangeList: vars.finalTargetExchangeNames,
+	targetExchangeDetails: vars.destExchangeDetails,
 	accessToken: vars.accessToken
 }]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="4dc3dfcd-7807-4bf5-b2bc-4f233dc42397" message="#[payload]"/>
 				<vm:publish doc:name="Publish" doc:id="3e4cdc00-77c9-4b7e-b138-4ee071515a2d" config-ref="VM_Config_appList" queueName="queueListQueue">
-			<vm:content><![CDATA[#[vars.payloadForQueue]]]></vm:content>
-		</vm:publish>
+					<vm:content><![CDATA[#[vars.payloadForQueue]]]></vm:content>
+				</vm:publish>
 			</when>
 			<otherwise >
 				<logger level="INFO" doc:name="Logger" doc:id="bca44a17-fe2b-4e72-9109-c7b08ade73f2" message="Empty target queue list"/>
@@ -97,6 +116,10 @@ output application/json
 payload.organization.environments map((env, envIdx) -> {
 	(env.name): env.id
 }) reduce($$ ++ $)]]></ee:set-variable>
+				<ee:set-variable variableName="sourceExchangeDetails" ><![CDATA[%dw 2.0
+output application/java
+---
+[]]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 	</sub-flow>
@@ -163,13 +186,48 @@ getEnv(vars.destEnvName)]]></ee:set-variable>
 		<logger level="INFO" doc:name="Logger" doc:id="0eb9745e-0f86-4182-bba2-0fe9c9f0b3b2" message="#[payload]" />
 		<ee:transform doc:name="Transform Message" doc:id="3c112a6f-a19a-4c6a-9be4-7b5094971d3b" >
 			<ee:message >
-				<ee:set-payload ><![CDATA[payload filter($."type" == "queue")]]></ee:set-payload>
+				<ee:set-payload ><![CDATA[output application/json
+---
+{
+	queue: payload filter($."type" == "queue"),
+	exchange: payload filter($."type" == "exchange")
+}]]></ee:set-payload>
 			</ee:message>
 			<ee:variables >
 			</ee:variables>
 		</ee:transform>
 	</sub-flow>
+	<sub-flow name="get-exchange-details" doc:id="99831dc8-3c76-4d3e-9b5c-40266bdeb7e1" >
+		<foreach doc:name="For Each" doc:id="49d79932-ff19-46a8-862a-2a722aaa03ae" collection="vars.sourceExchangeList">
+			<http:request method="GET" doc:name="Exchange Details" doc:id="9b17fcb0-ad0d-42b7-b8e1-afcfc21bec04" url="${anypoint.amqExchangeOpURL}">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : "Bearer " ++ vars.accessToken
+}]]]></http:headers>
+				<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	"orgid" : vars.orgId,
+	"envid" : vars.sourceEnvId,
+	"region" : vars.region,
+	"exchgid" : payload.exchangeId
+}]]]></http:uri-params>
+			</http:request>
+			<ee:transform doc:name="sourceExchangeDetails" doc:id="8ad25fd7-1df1-4ca6-9e30-e374f1e66e29" >
+				<ee:message >
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="sourceExchangeDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.sourceExchangeDetails ++ payload]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</foreach>
+	</sub-flow>
 	<sub-flow name="prepare-migration-data" doc:id="c52fedea-d06e-4762-b8ee-a5f98ae19147" >
+		<flow-ref doc:name="get-exchange-details" doc:id="e190424e-6d15-49f6-8a9b-7b47be6d8bb8" name="get-exchange-details"/>
 		<choice doc:name="Choice" doc:id="142fd474-ae80-402f-bbfa-8b6f6557a8f1" >
 			<when expression="#[vars.skipTestQueues == true]">
 				<ee:transform doc:name="Transform Message" doc:id="28bb3a6f-f86d-4f9c-acfb-41bf707c0b2e" >
@@ -208,6 +266,21 @@ vars.sourceQList map((qData, dataIdx) -> {
 })]]></ee:set-payload>
 					</ee:message>
 					<ee:variables >
+						<ee:set-variable variableName="destExchangeDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.sourceExchangeDetails map((eData, eDataIdx) -> {
+	queueId: eData.queueId replace vars.sourcePattern with vars.destPattern,
+    exchangeId: eData.exchangeId replace vars.sourcePattern with vars.destPattern
+})]]></ee:set-variable>
+						<ee:set-variable variableName="sourceExchangeList" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.sourceExchangeList map ((eData, eDataIdx) -> {
+	encrypted: eData.encrypted,
+	"type": eData."type",
+	exchangeId: eData.exchangeId replace vars.sourcePattern with vars.destPattern
+})]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 			</when>
@@ -217,6 +290,10 @@ vars.sourceQList map((qData, dataIdx) -> {
 					<ee:message >
 						<ee:set-payload ><![CDATA[vars.sourceQList]]></ee:set-payload>
 					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="destExchangeDetails" ><![CDATA[vars.sourceExchangeDetails]]></ee:set-variable>
+						<ee:set-variable variableName="sourceExchangeList" ><![CDATA[vars.sourceExchangeList]]></ee:set-variable>
+					</ee:variables>
 				</ee:transform>
 			</otherwise>
 		</choice>
@@ -228,6 +305,7 @@ vars.sourceQList map((qData, dataIdx) -> {
 					</ee:message>
 					<ee:variables >
 						<ee:set-variable variableName="finalTargetQNames" ><![CDATA[payload orderBy ($.deadLetterQueueId default "")]]></ee:set-variable>
+						<ee:set-variable variableName="finalTargetExchangeNames" ><![CDATA[vars.sourceExchangeList]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 			</when>
@@ -240,6 +318,10 @@ vars.sourceQList map((qData, dataIdx) -> {
 output application/json
 ---
 (payload -- vars.targetQList) orderBy ($.deadLetterQueueId default "")]]></ee:set-variable>
+						<ee:set-variable variableName="finalTargetExchangeNames" ><![CDATA[%dw 2.0
+output application/java
+---
+vars.sourceExchangeList -- vars.targetExchangeList]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
 			</otherwise>
