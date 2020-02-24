@@ -4,12 +4,12 @@ http:
   path: "/deploy"
   
 anypoint:
-  user.name: "mainul"
+  user.name: "userName"
   apiProfilePath: "https://anypoint.mulesoft.com/accounts/api/profile"
   amqList: "https://anypoint.mulesoft.com/mq/admin/api/v1/organizations/{orgid}/environments/{envid}/regions/{region}/destinations?inclusion=MINIMAL"
   amqOpURL: "https://anypoint.mulesoft.com/mq/admin/api/v1/organizations/{orgid}/environments/{envid}/regions/{region}/destinations/queues/{qid}"
   amqExchangeOpURL: "https://anypoint.mulesoft.com/mq/admin/api/v1/organizations/{orgid}/environments/{envid}/regions/{region}/bindings/exchanges/{exchgid}"
   amqExchangeCreateURL: "https://anypoint.mulesoft.com/mq/admin/api/v1/organizations/{orgid}/environments/{envid}/regions/{region}/destinations/exchanges/{exchgid}"
   source:
-    envId: "7093c241-93d4-4b60-aea2-72446abfd7b9"
-    orgId: "3f0b8342-a74a-4d37-afe6-5f26fde6babe"
+    envId: "<source.envId>"
+    orgId: "<source.orgId>"
