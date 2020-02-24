@@ -25,6 +25,7 @@ local.properties
 .loadpath
 .project
 .classpath
+src/main/mule/common/local.xml
 
 # External tool builders
 .externalToolBuilders/
