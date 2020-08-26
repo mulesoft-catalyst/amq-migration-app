@@ -137,6 +137,14 @@ output application/java
 				<ee:set-variable variableName="sourcePattern"><![CDATA[payload.sourceNamePattern]]></ee:set-variable>
 				<ee:set-variable variableName="destPattern"><![CDATA[payload.targetNamePattern]]></ee:set-variable>
 				<ee:set-variable variableName="skipTestQueues" ><![CDATA[payload.skipTestQueues]]></ee:set-variable>
+				<ee:set-variable variableName="userName" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers."username"]]></ee:set-variable>
+				<ee:set-variable variableName="password" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers."password"]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="get-access-token-subflow" doc:id="c80abe3a-6fcf-4257-ba72-60adeafc04ba" name="get-access-token-subflow" target="accessToken" targetValue="#[payload.access_token]"/>
@@ -338,8 +346,8 @@ vars.sourceExchangeList -- vars.targetExchangeList]]></ee:set-variable>
 output application/json
 ---
 {
-   "username" : p('anypoint.user.name'),
-   "password" : p('secure::anypoint.user.pass')
+   "username" : vars.userName,
+   "password" : vars.password
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>

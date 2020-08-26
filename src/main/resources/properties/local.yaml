@@ -1,15 +1,16 @@
 http:
   port: "8081"
-  host: localhost
+  host: "0.0.0.0"
   path: "/deploy"
   
 anypoint:
-  user.name: "userName"
+  user.name: "mainul_standards"
+  user.pass: "ummeHANI214@!$*"
   apiProfilePath: "https://anypoint.mulesoft.com/accounts/api/profile"
   amqList: "https://anypoint.mulesoft.com/mq/admin/api/v1/organizations/{orgid}/environments/{envid}/regions/{region}/destinations?inclusion=MINIMAL"
   amqOpURL: "https://anypoint.mulesoft.com/mq/admin/api/v1/organizations/{orgid}/environments/{envid}/regions/{region}/destinations/queues/{qid}"
   amqExchangeOpURL: "https://anypoint.mulesoft.com/mq/admin/api/v1/organizations/{orgid}/environments/{envid}/regions/{region}/bindings/exchanges/{exchgid}"
   amqExchangeCreateURL: "https://anypoint.mulesoft.com/mq/admin/api/v1/organizations/{orgid}/environments/{envid}/regions/{region}/destinations/exchanges/{exchgid}"
   source:
-    envId: "<source.envId>"
-    orgId: "<source.orgId>"
+    envId: "cb35f2c4-85d1-48aa-9015-58e98b508847"
+    orgId: "430f3c13-2f34-4763-aa3d-2b9517b1f946"
